@@ -1,0 +1,46 @@
+trigger:
+  paths:
+    include:
+      - builds/*
+      - GHMigration/*
+
+variables:
+  - group: "version"
+
+stages:
+  - stage:
+    displayName: BuildPublish
+    condition: always()
+    jobs:
+      - job: BuildTestPublish
+        pool:
+          vmImage: "ubuntu-latest"
+        
+        steps:
+          - task: UseDotNet@2
+            displayName: Install .NET Core 7 SDK
+            inputs:
+              packageType: 'sdk'
+              version: '7.0.x'
+          - task: DotNetCoreCLI@2
+            displayName: Restore Projects
+            inputs:
+              command: restore
+          - task: DotNetCoreCLI@2
+            displayName: Build
+            inputs:
+              command: build
+              projects: GHMigration/GHMigration.csproj
+              arguments: '--no-restore --configuration Release'
+          - task: DotNetCoreCLI@2
+            displayName: Publish App
+            inputs:
+              command: publish
+              publishWebProjects: false
+              projects: GHMigration/GHMigration.csproj
+              arguments: '--no-build --configuration Release --output $(Build.ArtifactStagingDirectory)'
+              zipAfterPublish: True
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              artifactName: 'GHMigration.$(Build.BuildNumber)'
