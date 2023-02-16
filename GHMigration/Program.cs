@@ -1,5 +1,4 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
+using GHMigration;
 using GHMigration.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,8 +7,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
+var healthCheckOptions = new TestHealthCheckOptions();
+builder.Configuration.GetSection("TestHealthCheckOptions").Bind(healthCheckOptions);
+builder.Services.AddSingleton(healthCheckOptions);
+
+builder.Services.AddHealthChecks()
+    .AddCheck<TestHealthCheck>("Test");
 
 var app = builder.Build();
+
+app.MapHealthChecks("/health");
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
